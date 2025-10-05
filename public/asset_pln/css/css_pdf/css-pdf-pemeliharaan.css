@@ -1,0 +1,43 @@
+body {
+    font-family: Arial, sans-serif,"DejaVu Sans";
+    font-size: 7.4px;
+    line-height: 0.9;
+    margin: 0;
+    padding: 10px;
+}
+
+.container {
+    width: 100%;
+}
+
+.header-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 10px;
+    border: 1px solid #000;
+}
+
+.header-table td {
+    padding: 3px 5px;
+    border: 1px solid #000;
+    vertical-align: top;
+}
+
+.title {
+    font-weight: bold;
+    text-align: center;
+    background-color: yellow;
+    font-size: 10px;
+}
+
+.bold-text {
+    font-weight: bold;
+    font-size: 7.5px;
+    color: #333;
+}
+
+* {
+    margin: 0;
+    padding: 2px 2px 2px 2px;
+    box-sizing: border-box;
+}

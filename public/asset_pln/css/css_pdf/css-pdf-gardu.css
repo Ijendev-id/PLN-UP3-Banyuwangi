@@ -1,0 +1,36 @@
+body {
+    font-family: DejaVu Sans, sans-serif;
+    font-size: 12px;
+    line-height: 1.4;
+}
+
+.header {
+    text-align: center;
+    font-size: 14px;
+    font-weight: bold;
+    margin-bottom: 15px;
+}
+
+table.detail {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 10px;
+}
+
+table.detail td {
+    padding: 4px 8px;
+    vertical-align: top;
+    font-size: 12px;
+    border: 1px solid #000;
+}
+
+.title {
+    font-weight: bold;
+    text-align: center;
+    background-color: yellow;
+    font-size: 14px;
+    padding: 6px;
+    margin: 0;
+    border: 1px solid #000;
+    border-bottom: none;
+}

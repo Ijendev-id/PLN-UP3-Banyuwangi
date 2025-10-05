@@ -1,0 +1,18 @@
+jalankan pada terminal saat pertama kali menjalankan aplikasi
+php artisan db:seed
+composer require barryvdh/laravel-dompdf
+npm run install
+
+clear cache laravel dengan = php artisan optimize:clear
+
+1. link api postman = https://orange-star-472855.postman.co/workspace/laravel-api~b44f1d5b-19ea-46f8-8b31-aa9bc337e91e/collection/29631483-e77f7922-9711-4a54-8002-617aadf5c3ed?action=share&creator=38498316
+
+2. dikarenakan terdapat perubahan yang sebelumnya routes menggunakan api sekarang berubah menjadi web, maka untuk menghindari error  419 pada postman
+get dulu token (didapat dari url routes pada web) copy dan masukkan ke postman pada tab headers lalu key isi X-CSRF-TOKEN dan value token yang didapat dari url
+
+3. autentikasi sistem menggunakan session-based auth (breze) dengan 3 level user
+
+4. dikarenakan testing backend menggunakan postman maka perlu dissable crsf token dulu, jgn lupa di aktifkan lagi crsfnya saat akan mengembangkan form input pada front end, lokasi file pada
+\app\Http\Middleware\VerifyCsrfToken
+
+5. jalankan perintah npm run dev pada terminal 1 dan pada terminal 2 php artisan serve

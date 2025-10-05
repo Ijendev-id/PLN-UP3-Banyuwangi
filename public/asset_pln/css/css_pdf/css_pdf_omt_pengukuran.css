@@ -1,0 +1,52 @@
+body {
+    font-family: DejaVu Sans, sans-serif;
+    font-size: 11px;
+}
+
+table {
+    border-collapse: collapse;
+    width: 100%;
+}
+
+th, td {
+    border: 1px solid #000;
+    padding: 4px;
+    vertical-align: top;
+}
+
+.judul {
+    text-align: center;
+    font-weight: bold;
+    font-size: 14px;
+    background-color: yellow;
+}
+
+.no-border {
+    border: none;
+}
+
+/* Membuat kolom 1 dan kolom 3 otomatis bold */
+td:first-child,
+td:nth-child(3) {
+    font-weight: bold;
+}
+
+.keterangan-label {
+    font-weight: bold;
+}
+
+.keterangan-text {
+    font-weight: normal;
+}
+
+/* Style untuk tabel tegangan dengan 6 kolom */
+.voltage-table td:nth-child(odd) {
+    text-align: center;
+    font-weight: bold;
+}
+
+/* label (Ian, dll) menjadi bold */
+.table-arus td:nth-child(odd) {
+    text-align: left;
+    font-weight: 700;
+}
