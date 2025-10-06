@@ -86,6 +86,7 @@
                 'kd_pylg' => 'Penyulang',
                 'gardu_induk' => 'Gardu Induk',
                 'alamat' => 'Alamat',
+                'desa' => 'Desa',
                 'kd_trf_gi' => 'KD TRF GI',
                 'daya_trafo' => 'Daya Trafo',
                 'merek_trafo' => 'Merek Trafo',

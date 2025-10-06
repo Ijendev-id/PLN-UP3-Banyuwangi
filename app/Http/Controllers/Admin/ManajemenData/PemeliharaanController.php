@@ -537,10 +537,12 @@ class PemeliharaanController extends Controller
 
     public function update(Request $request, $id)
     {
-        if ($request->filled('waktu_pemeliharaan')) {
+         if ($request->filled('waktu_pemeliharaan')) {
         $raw = $request->input('waktu_pemeliharaan');
         try {
-            if (Carbon::hasFormat($raw, 'Y-m-d\TH:i')) {
+            if (Carbon::hasFormat($raw, 'Y-m-d\TH:i:s')) {
+                $dt = Carbon::createFromFormat('Y-m-d\TH:i:s', $raw);
+            } elseif (Carbon::hasFormat($raw, 'Y-m-d\TH:i')) {
                 $dt = Carbon::createFromFormat('Y-m-d\TH:i', $raw);
             } elseif (Carbon::hasFormat($raw, 'Y-m-d H:i:s')) {
                 $dt = Carbon::createFromFormat('Y-m-d H:i:s', $raw);
@@ -1044,8 +1046,8 @@ class PemeliharaanController extends Controller
 
             // tanggal2: samakan format
             if ($k === 'waktu_pemeliharaan' && $v) {
-                try { $v = Carbon::parse($v)->format('Y-m-d H:i'); } catch (\Throwable $e) {}
-                // HANYA sampai menit, agar perbedaan detik akibat <input datetime-local> diabaikan
+                try { $v = Carbon::parse($v)->format('Y-m-d H:i:s'); } catch (\Throwable $e) {}
+                
             }
             if ($k === 'panel_gtt_tgl_inspeksi' && $v) {
                 try { $v = Carbon::parse($v)->format('Y-m-d'); } catch (\Throwable $e) {}
@@ -1071,19 +1073,100 @@ class PemeliharaanController extends Controller
 
         // Ambil hanya kolom yang fillable saja
         $fillable = $pemeliharaan->getFillable();
-        $dataBaru   = array_intersect_key($validated, array_flip($fillable));
-        $dataLama   = $pemeliharaan->only(array_keys($dataBaru));
+        $dataBaru = array_intersect_key($validated, array_flip($fillable));
+        $dataLama = $pemeliharaan->only(array_keys($dataBaru));
 
-        // Normalisasi KEDUA sisi
-        $normBaru = $normalize($dataBaru);
-        $normLama = $normalize($dataLama);
+        //update perbaiki fungsi update akan berjalan jika ada data yang berubah
+        $normalizeForComparison = function(array $data): array {
+            $normalized = [];
+            
+            foreach ($data as $key => $value) {
+                // Handle null values
+                if ($value === null) {
+                    $normalized[$key] = null;
+                    continue;
+                }
 
-        // Bandingkan per kolom
+                // String processing
+                if (is_string($value)) {
+                    $value = trim(preg_replace('/\s+/u', ' ', $value));
+                    if ($value === '') {
+                        $normalized[$key] = null;
+                        continue;
+                    }
+                }
+
+                // Special handling for specific fields
+                switch ($key) {
+                    case 'waktu_pemeliharaan':
+                        try {
+                            $normalized[$key] = Carbon::parse($value)->format('Y-m-d H:i:s');
+                        } catch (\Throwable $e) {
+                            $normalized[$key] = $value;
+                        }
+                        break;
+                        
+                    case 'panel_gtt_tgl_inspeksi':
+                        try {
+                            $normalized[$key] = Carbon::parse($value)->format('Y-m-d');
+                        } catch (\Throwable $e) {
+                            $normalized[$key] = $value;
+                        }
+                        break;
+                        
+                    case 'arus_bocor':
+                        if (is_numeric($value)) {
+                            $normalized[$key] = number_format((float)$value, 2, '.', '');
+                        } else {
+                            $normalized[$key] = $value;
+                        }
+                        break;
+                        
+                    default:
+                        // Integer fields - convert to int for comparison
+                        if (preg_match('/^(fuse_link_|tahanan_isolasi_|nilai_r_tanah_|tahan_isolasi_trafo_)/', $key) && is_numeric($value)) {
+                            $normalized[$key] = (int)$value;
+                        } else {
+                            $normalized[$key] = $value;
+                        }
+                        break;
+                }
+            }
+            
+            return $normalized;
+        };
+
+        // Normalize both datasets for comparison
+        $normBaru = $normalizeForComparison($dataBaru);
+        $normLama = $normalizeForComparison($dataLama);
+
+        // **FIX: Improved comparison logic**
         $adaPerubahan = false;
-        foreach ($normBaru as $k => $vBaru) {
-            $vLama = $normLama[$k] ?? null;
-            if ($vBaru !== $vLama) { $adaPerubahan = true; break; }
-        }
+        $perubahanDetail = [];
+
+        foreach ($normBaru as $key => $valueBaru) {
+            $valueLama = $normLama[$key] ?? null;
+            
+            // Deep comparison with type checking
+            if ($valueBaru !== $valueLama) {
+                // Special case for numeric comparison
+                if (is_numeric($valueBaru) && is_numeric($valueLama)) {
+                    if ((float)$valueBaru !== (float)$valueLama) {
+                        $adaPerubahan = true;
+                        $perubahanDetail[$key] = ['lama' => $valueLama, 'baru' => $valueBaru];
+                    }
+                } 
+                // Special case for string comparison with empty vs null
+                elseif (($valueBaru === '' && $valueLama === null) || ($valueBaru === null && $valueLama === '')) {
+                    // Consider empty string and null as same
+                    continue;
+                }
+                else {
+                    $adaPerubahan = true;
+                    $perubahanDetail[$key] = ['lama' => $valueLama, 'baru' => $valueBaru];
+                }
+            }
+        }        
 
         if (!$adaPerubahan) {
             DB::rollBack();
@@ -1092,18 +1175,14 @@ class PemeliharaanController extends Controller
                 : back()->with('info', 'Tidak ada perubahan data, update dibatalkan.');
         }
 
-        // Simpan perubahan asli (bukan yang dipotong menit dll) supaya data tetap utuh
+        // Jika ada perubahan, lakukan update
         $pemeliharaan->update($dataBaru);
 
-        // Snapshot baru + normalisasi utk history
-        $afterRaw   = $pemeliharaan->fresh()->only(array_keys($dataBaru));
-        $normAfter  = $normalize($afterRaw);
-
-        // History (pastikan model History sudah punya data_baru)
+        // Buat history
         HistoryDataPemeliharaan::create([
             'id_pemeliharaan' => $pemeliharaan->id,
             'data_lama'       => json_encode($normLama, JSON_UNESCAPED_UNICODE),
-            'data_baru'       => json_encode($normAfter, JSON_UNESCAPED_UNICODE),
+            'data_baru'       => json_encode($normBaru, JSON_UNESCAPED_UNICODE),
             'aksi'            => 'update',
             'diubah_oleh'     => auth()->user()->name ?? '-',
             'keterangan'      => $validated['keterangan_history'] ?? null,
@@ -1122,6 +1201,7 @@ class PemeliharaanController extends Controller
         return redirect()
             ->route('pemeliharaan.create', ['kd_gardu' => $pemeliharaan->kd_gardu])
             ->with('success', 'Data pemeliharaan berhasil diperbarui.');
+            
     } catch (\Throwable $e) {
         DB::rollBack();
         Log::error('Pemeliharaan Update Error', ['message' => $e->getMessage()]);

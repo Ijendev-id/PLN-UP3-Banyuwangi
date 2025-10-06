@@ -117,7 +117,7 @@ return new class extends Migration
             $table->string('panel_gtt_pondasi', 10);
             $table->string('panel_gtt_tanda_peringatan', 10);
             $table->string('panel_gtt_jenis_gardu', 10);            
-            $table->datetime('panel_gtt_tgl_inspeksi');
+            $table->date('panel_gtt_tgl_inspeksi');//perubuahan tipe data
             $table->string('panel_gtt_insp_siang', 10);
             $table->string('panel_gtt_pekerjaan_pemeliharaan', 50);
             $table->string('panel_gtt_catatan', 50)->nullable();

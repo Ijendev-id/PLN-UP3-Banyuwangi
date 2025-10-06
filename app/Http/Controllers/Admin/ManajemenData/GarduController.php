@@ -617,11 +617,11 @@ class GarduController extends Controller
         // Rekap per gardu: 1 baris per id_data_gardu, ambil log terakhir + total log
         // step 1: subquery rekap
         $recapSub = HistoryDataGardu::select([
-                'id_data_gardu',
-                DB::raw('MAX(id) as last_id'),
-                DB::raw('MAX(created_at) as last_at'),
-                DB::raw('COUNT(*) as total_logs'),
-            ])
+            'id_data_gardu',
+            DB::raw('MAX(id) as last_id'),
+            DB::raw('MAX(created_at) as last_at'),
+            DB::raw('COUNT(*) as total_logs'),
+        ])
             ->groupBy('id_data_gardu');
 
         // step 2: join ke history terakhir & data_gardu saat ini
@@ -647,10 +647,10 @@ class GarduController extends Controller
 
         // Filter q (prioritas ke kd_gardu_now; fallback ke snapshot JSON)
         if ($q !== '') {
-            $query->where(function($qq) use ($q) {
+            $query->where(function ($qq) use ($q) {
                 $qq->where('dg.kd_gardu', 'like', "%{$q}%")
-                ->orWhere('hlast.data_lama', 'like', '%"kd_gardu":"'.$q.'"%')
-                ->orWhere('hlast.data_lama', 'like', '%"kd_gardu":'.$q.'%');
+                    ->orWhere('hlast.data_lama', 'like', '%"kd_gardu":"' . $q . '"%')
+                    ->orWhere('hlast.data_lama', 'like', '%"kd_gardu":' . $q . '%');
             });
         }
 
@@ -682,69 +682,68 @@ class GarduController extends Controller
         ]);
     }
     public function qr(Request $request)
-{
-    // opsi: bisa prefill dari ?kd=... saat masuk ke halaman
-    $prefillKd = trim((string) $request->query('kd', ''));
-    return view('manajemen-data.detail.qr', compact('prefillKd'));
-}
-
-public function findByKode(Request $request)
-{
-    // validasi sederhana
-    $request->validate([
-        'kd_gardu' => 'required|string|max:10'
-    ]);
-
-    // kd_gardu unik (sesuai rules store/update Anda)
-    $kode = trim($request->kd_gardu);
-
-    // pilih kolom yang dipakai di Blade supaya rapi
-    $columns = [
-        'id',
-        'gardu_induk',
-        'kd_trf_gi',
-        'kd_pylg',
-        'kd_gardu',
-        'daya_trafo',
-        'jml_trafo',
-        'alamat',
-        'desa',
-        'no_seri',
-        'berat_total',
-        'berat_minyak',
-        'hubungan',
-        'impedansi',
-        'tegangan_tm',
-        'tegangan_tr',
-        'frekuensi',
-        'tahun',
-        'merek_trafo',
-        'beban_kva_trafo',
-        'persentase_beban',
-        'section_lbs',
-        'fasa',
-        'nilai_sdk_utama',
-        'nilai_primer',
-        'tap_no',
-        'tap_kv',
-        'rekondisi_preman',
-        'bengkel',
-    ];
-
-    $gardu = DataGardu::query()
-        ->select($columns)
-        ->where('kd_gardu', $kode)     // exact match; QR diisi kd_gardu persis
-        ->first();
-
-    if (!$gardu) {
-        return response()->json(['status' => 'not_found'], 200);
+    {
+        // opsi: bisa prefill dari ?kd=... saat masuk ke halaman
+        $prefillKd = trim((string) $request->query('kd', ''));
+        return view('manajemen-data.detail.qr', compact('prefillKd'));
     }
 
-    // kirim data apa adanya; Blade akan baca field-field ini
-    return response()->json([
-        'status' => 'ok',
-        'data'   => $gardu->toArray(),
-    ], 200);
-}
+    public function findByKode(Request $request)
+    {
+        // validasi sederhana
+        $request->validate([
+            'kd_gardu' => 'required|string|max:10'
+        ]);
 
+        // kd_gardu unik (sesuai rules store/update Anda)
+        $kode = trim($request->kd_gardu);
+
+        // pilih kolom yang dipakai di Blade supaya rapi
+        $columns = [
+            'id',
+            'gardu_induk',
+            'kd_trf_gi',
+            'kd_pylg',
+            'kd_gardu',
+            'daya_trafo',
+            'jml_trafo',
+            'alamat',
+            'desa',
+            'no_seri',
+            'berat_total',
+            'berat_minyak',
+            'hubungan',
+            'impedansi',
+            'tegangan_tm',
+            'tegangan_tr',
+            'frekuensi',
+            'tahun',
+            'merek_trafo',
+            'beban_kva_trafo',
+            'persentase_beban',
+            'section_lbs',
+            'fasa',
+            'nilai_sdk_utama',
+            'nilai_primer',
+            'tap_no',
+            'tap_kv',
+            'rekondisi_preman',
+            'bengkel',
+        ];
+
+        $gardu = DataGardu::query()
+            ->select($columns)
+            ->where('kd_gardu', $kode)     // exact match; QR diisi kd_gardu persis
+            ->first();
+
+        if (!$gardu) {
+            return response()->json(['status' => 'not_found'], 200);
+        }
+
+        // kirim data apa adanya; Blade akan baca field-field ini
+        return response()->json([
+            'status' => 'ok',
+            'data'   => $gardu->toArray(),
+        ], 200);
+    }
 }

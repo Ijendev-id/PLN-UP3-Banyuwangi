@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use App\Models\HistoryData\HistoryDataOmtPengukuran;
 use App\Models\ManajemenData\OmtPengukuran;
 use App\Models\ManajemenData\DataGardu; // <-- TAMBAHKAN BARIS INI
+use App\Models\HistoryData\HistoryDataGardu;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
@@ -31,7 +32,6 @@ class OmtPengukuranController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'kd_gardu' => 'required|string|max:10|exists:data_gardu,kd_gardu|unique:omt_pengukuran,kd_gardu',
-            // 'kd_gardu' => 'required|string|max:10|exists:data_gardu,kd_gardu',
             'ian' => 'required|integer|max:32767',
             'iar' => 'required|integer|max:32767',
             'ias' => 'required|integer|max:32767',
@@ -152,103 +152,102 @@ class OmtPengukuranController extends Controller
 
 
         if ($validator->fails()) {
-        if ($request->ajax() || $request->wantsJson()) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Validasi gagal',
-                'errors'  => $validator->errors()
-            ], 422);
-        }
-        return back()->withErrors($validator)->withInput();
-    }
-
-    try {
-        DB::beginTransaction();
-
-        // Ambil field yang diizinkan + normalisasi & set operator
-        $dataBaru = $request->only((new OmtPengukuran())->getFillable());
-
-        // Normalisasi dari "YYYY-MM-DDTHH:ii" -> "YYYY-MM-DD HH:ii:ss"
-        $dataBaru['waktu_pengukuran'] = Carbon::createFromFormat('Y-m-d\TH:i', $request->waktu_pengukuran)
-                                              ->format('Y-m-d H:i:s');
-
-        // Set diubah_oleh dari user login (override kalau tak ada di request)
-        $dataBaru['diubah_oleh'] = auth()->user()->name ?? 'system';
-
-        // Simpan utama
-        $pengukuran = OmtPengukuran::create($dataBaru);
-
-        // Hitung beban & persentase
-        $bebanKvaTrafo = ($request->iur * $request->vrn)
-                       + ($request->ius * $request->vsn)
-                       + ($request->iut * $request->vtn);
-
-        $gardu = DataGardu::where('kd_gardu', $dataBaru['kd_gardu'])->first();
-        $persentaseBeban = 0;
-        if ($gardu && $gardu->daya_trafo > 0) {
-            $persentaseBeban = round(($bebanKvaTrafo / $gardu->daya_trafo) * 100, 1);
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Validasi gagal',
+                    'errors'  => $validator->errors()
+                ], 422);
+            }
+            return back()->withErrors($validator)->withInput();
         }
 
-        // Validasi hasil hitung — JANGAN return back() di sini
-        $validasiHasil = Validator::make([
-            'beban_kva_trafo'  => $bebanKvaTrafo,
-            'persentase_beban' => $persentaseBeban
-        ], [
-            'beban_kva_trafo'  => 'nullable|numeric|between:0,9999.9|regex:/^\d{1,4}(\.\d)?$/',
-            'persentase_beban' => 'nullable|numeric|between:0,999.9|regex:/^\d{1,3}(\.\d)?$/',
-        ], [
-            // pesan2mu sama seperti sebelumnya...
-        ]);
-        if ($validasiHasil->fails()) {
-            // lempar agar ketangkap dan di-rollback rapi
-            throw ValidationException::withMessages($validasiHasil->errors()->toArray());
+        try {
+            DB::beginTransaction();
+
+            $dataBaru = $request->only((new OmtPengukuran())->getFillable());
+            $dataBaru['waktu_pengukuran'] = Carbon::createFromFormat('Y-m-d\TH:i', $request->waktu_pengukuran)
+                ->format('Y-m-d H:i:s');
+
+            $pengukuran = OmtPengukuran::create($dataBaru);
+
+            // === Hitung beban dan persentase
+            $bebanKvaTrafo = ($request->iur * $request->vrn)
+                + ($request->ius * $request->vsn)
+                + ($request->iut * $request->vtn);
+
+            $gardu = DataGardu::where('kd_gardu', $dataBaru['kd_gardu'])->first();
+            $persentaseBeban = 0;
+            if ($gardu && $gardu->daya_trafo > 0) {
+                $persentaseBeban = round(($bebanKvaTrafo / $gardu->daya_trafo) * 100, 1);
+            }
+
+            // Validasi hasil hitung
+            $validasiHasil = Validator::make([
+                'beban_kva_trafo'  => $bebanKvaTrafo,
+                'persentase_beban' => $persentaseBeban
+            ], [
+                'beban_kva_trafo'  => 'nullable|numeric|between:0,9999.9|regex:/^\d{1,4}(\.\d)?$/',
+                'persentase_beban' => 'nullable|numeric|between:0,999.9|regex:/^\d{1,3}(\.\d)?$/',
+            ], [
+                'persentase_beban.numeric' => 'Persentase beban harus berupa angka',
+                'persentase_beban.between' => 'Sistem secara otomatis menghitung persentase beban dengan rumus = beban kva trafo / daya trafo x 100. input anda melebihi batas max input 999.9',
+                'persentase_beban.regex'   => 'Sistem hanya menerima data Persentase beban dengan 1 angka desimal, contoh max input 999.9',
+                'beban_kva_trafo.numeric'  => 'Beban KVA trafo harus berupa angka',
+                'beban_kva_trafo.between'  => 'Sistem secara otomatis menghitung beban kva trafo dengan rumus = (iur*vrn) + (ius*vsn) + (iut*vtn). input anda melebihi batas max input 9999.9',
+                'beban_kva_trafo.regex'    => 'Sistem hanya menerima data Beban KVA trafo dengan 1 angka desimal, contoh max input 9999.9',
+            ]);
+            if ($validasiHasil->fails()) {
+                throw ValidationException::withMessages($validasiHasil->errors()->toArray());
+            }
+
+            //simpan history full pada tabel history data gardu walau hanya 2 field yang berubah beban_kva_trafo dan persentase_beban
+            if ($gardu) {
+                $dataLamaFull = $gardu->toArray();
+                $gardu->update([
+                    'beban_kva_trafo'  => $bebanKvaTrafo,
+                    'persentase_beban' => $persentaseBeban,
+                ]);
+                $dataBaruFull = $gardu->fresh()->toArray();
+                $fieldsUntukBanding = ['beban_kva_trafo', 'persentase_beban'];
+                $dataLamaBanding = array_intersect_key($dataLamaFull, array_flip($fieldsUntukBanding));
+                $dataBaruBanding = array_intersect_key($dataBaruFull, array_flip($fieldsUntukBanding));
+
+                if ($dataLamaBanding !== $dataBaruBanding) {
+                    HistoryDataGardu::create([
+                        'id_data_gardu' => $gardu->id,
+                        'data_lama' => json_encode($dataLamaFull, JSON_UNESCAPED_UNICODE),
+                        'data_baru' => json_encode($dataBaruFull, JSON_UNESCAPED_UNICODE),
+                        'aksi' => 'update',
+                        'diubah_oleh' => Auth::user()->name ?? 'Sistem (otomatis)',
+                        'keterangan' => 'Pembaruan beban dari hasil pengukuran',
+                    ]);
+                }
+            }
+
+            // simpan history pengukuran
+            HistoryDataOmtPengukuran::create([
+                'id_omt_pengukuran' => $pengukuran->id,
+                'data_lama'         => json_encode([], JSON_UNESCAPED_UNICODE),
+                'data_baru'         => json_encode($pengukuran->only(array_keys($dataBaru)), JSON_UNESCAPED_UNICODE),
+                'aksi'              => 'create',
+                'diubah_oleh'       => Auth::user()->name,
+                'keterangan'        => $request->input('keterangan_history'),
+            ]);
+
+            DB::commit();
+
+            return redirect()
+                ->route('omt-pengukuran.create', ['kd_gardu' => $pengukuran->kd_gardu])
+                ->with('success', 'Data OMT pengukuran berhasil ditambahkan');
+        } catch (ValidationException $e) {
+            DB::rollBack();
+            return back()->withErrors($e->errors())->withInput();
+        } catch (\Throwable $e) {
+            DB::rollBack();
+            Log::error('OMT Store Error', ['exception' => $e]);
+            return back()->with('error', 'Terjadi kesalahan saat menyimpan data.')->withInput();
         }
-
-        // Update ringkasan ke data_gardu
-        DataGardu::where('kd_gardu', $dataBaru['kd_gardu'])->update([
-            'beban_kva_trafo'  => $bebanKvaTrafo,
-            'persentase_beban' => $persentaseBeban,
-        ]);
-
-        // History: simpan data_baru dari MODEL (sudah "spasi", bukan yang ada 'T')
-        HistoryDataOmtPengukuran::create([
-            'id_omt_pengukuran' => $pengukuran->id,
-            'data_lama'         => json_encode([], JSON_UNESCAPED_UNICODE),
-            'data_baru'         => json_encode($pengukuran->only(array_keys($dataBaru)), JSON_UNESCAPED_UNICODE),
-            'aksi'              => 'create',
-            'diubah_oleh'       => $dataBaru['diubah_oleh'],
-            'keterangan'        => $request->input('keterangan_history'),
-        ]);
-
-        DB::commit();
-
-        if ($request->ajax() || $request->wantsJson()) {
-            return response()->json([
-                'success' => true,
-                'message' => 'Data OMT pengukuran berhasil ditambahkan',
-                'data'    => $pengukuran
-            ], 201);
-        }
-
-        return redirect()
-            ->route('omt-pengukuran.create', ['kd_gardu' => $pengukuran->kd_gardu])
-            ->with('success', 'Data OMT pengukuran berhasil ditambahkan');
-
-    } catch (ValidationException $e) {
-        DB::rollBack();
-        return back()->withErrors($e->errors())->withInput();
-    } catch (\Throwable $e) {
-        DB::rollBack();
-        Log::error('OMT Store Error', ['exception' => $e]);
-        if ($request->ajax() || $request->wantsJson()) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Terjadi kesalahan saat menyimpan data',
-                'error'   => env('APP_DEBUG') ? $e->getMessage() : null
-            ], 500);
-        }
-        return back()->with('error', 'Terjadi kesalahan saat menyimpan data.')->withInput();
-    }
     }
 
     public function update(Request $request, $id)
@@ -288,12 +287,11 @@ class OmtPengukuranController extends Controller
             'vtr' => 'required|integer|max:32767',
             'waktu_pengukuran' => 'required|date_format:Y-m-d\TH:i',
 
-            'iun' => 'required|integer|max:32767', //update baru
+            'iun' => 'required|integer|max:32767',
             'iur' => 'required|integer|max:32767',
             'ius' => 'required|integer|max:32767',
             'iut' => 'required|integer|max:32767',
 
-            // pencatatan perubahan pada tabel history
             'keterangan_history' => 'nullable|string|max:20',
         ], [
             'kd_gardu.required' => 'Kode gardu wajib diisi',
@@ -383,102 +381,160 @@ class OmtPengukuranController extends Controller
         ]);
 
         if ($validator->fails()) {
-        if ($request->wantsJson()) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Validasi gagal',
-                'errors'  => $validator->errors()
-            ], 422);
+            if ($request->wantsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Validasi gagal',
+                    'errors'  => $validator->errors()
+                ], 422);
+            }
+            return back()->withErrors($validator)->withInput();
         }
-        return back()->withErrors($validator)->withInput();
-    }
 
+        try {
+            DB::beginTransaction();
 
-// kalau mau tetap pakai Log tanpa use, gunakan \Log::error(...) di catch
+            // Format waktu pengukuran
+            $waktuPengukuranFormatted = Carbon::createFromFormat('Y-m-d\TH:i', $request->waktu_pengukuran)
+                ->format('Y-m-d H:i:s');
 
-try {
-    DB::beginTransaction();
+            $dataBaru = $request->only((new OmtPengukuran())->getFillable());
+            $dataBaru['waktu_pengukuran'] = $waktuPengukuranFormatted;
+            unset($dataBaru['diubah_oleh']);
+            $dataLamaOmt = $pengukuran->only(array_keys($dataBaru));
+            $perubahanUpdate = array_diff_assoc($dataBaru, $dataLamaOmt);
 
-    // Hanya kolom yang ada di tabel (sesuai $fillable)
-    $dataBaru = $request->only((new OmtPengukuran())->getFillable());
+            // Hitung beban KVA trafo
+            $bebanKvaTrafo = ($request->iur * $request->vrn)
+                + ($request->ius * $request->vsn)
+                + ($request->iut * $request->vtn);
 
-    // Normalisasi datetime: dari "2025-10-05T12:34" -> "2025-10-05 12:34:00"
-    $dataBaru['waktu_pengukuran'] = Carbon::createFromFormat('Y-m-d\TH:i', $request->waktu_pengukuran)
-        ->format('Y-m-d H:i:s');
+            $gardu = DataGardu::where('kd_gardu', $request->kd_gardu)->first();
 
-    // Set diubah_oleh dari user login (override input form)
-    $dataBaru['diubah_oleh'] = auth()->user()->name ?? 'system';
+            $persentaseBeban = 0;
+            if ($gardu && $gardu->daya_trafo > 0) {
+                $persentaseBeban = round(($bebanKvaTrafo / $gardu->daya_trafo) * 100, 1);
+            }
 
-    // Hitung beban & persentase (disimpan ke data_gardu, bukan ke omt_pengukuran)
-    $bebanKvaTrafo = ($request->iur * $request->vrn)
-        + ($request->ius * $request->vsn)
-        + ($request->iut * $request->vtn);
+            // === VALIDASI HASIL HITUNG - DITAMBAHKAN DI SINI ===
+            $validasiHasil = Validator::make([
+                'beban_kva_trafo'  => $bebanKvaTrafo,
+                'persentase_beban' => $persentaseBeban
+            ], [
+                'beban_kva_trafo'  => 'nullable|numeric|between:0,9999.9|regex:/^\d{1,4}(\.\d)?$/',
+                'persentase_beban' => 'nullable|numeric|between:0,999.9|regex:/^\d{1,3}(\.\d)?$/',
+            ], [
+                'persentase_beban.numeric' => 'Persentase beban harus berupa angka',
+                'persentase_beban.between' => 'Sistem secara otomatis menghitung persentase beban dengan rumus = beban kva trafo / daya trafo x 100. input anda melebihi batas max input 999.9',
+                'persentase_beban.regex'   => 'Sistem hanya menerima data Persentase beban dengan 1 angka desimal, contoh max input 999.9',
+                'beban_kva_trafo.numeric'  => 'Beban KVA trafo harus berupa angka',
+                'beban_kva_trafo.between'  => 'Sistem secara otomatis menghitung beban kva trafo dengan rumus = (iur*vrn) + (ius*vsn) + (iut*vtn). input anda melebihi batas max input 9999.9',
+                'beban_kva_trafo.regex'    => 'Sistem hanya menerima data Beban KVA trafo dengan 1 angka desimal, contoh max input 9999.9',
+            ]);
+            if ($validasiHasil->fails()) {
+                throw ValidationException::withMessages($validasiHasil->errors()->toArray());
+            }
 
-    $gardu = DataGardu::where('kd_gardu', $request->kd_gardu)->first();
-    $persentaseBeban = 0;
-    if ($gardu && $gardu->daya_trafo > 0) {
-        $persentaseBeban = round(($bebanKvaTrafo / $gardu->daya_trafo) * 100, 1);
-    }
+            $adaPerubahanGardu = false;
+            $adaPerubahanOmt = !empty($perubahanUpdate);
 
-    // Validasi angka hasil (opsional – tetap seperti punyamu)
-    $validasiHasil = Validator::make([
-        'beban_kva_trafo'  => $bebanKvaTrafo,
-        'persentase_beban' => $persentaseBeban
-    ], [
-        'beban_kva_trafo'  => 'nullable|numeric|between:0,9999.9|regex:/^\d{1,4}(\.\d)?$/',
-        'persentase_beban' => 'nullable|numeric|between:0,999.9|regex:/^\d{1,3}(\.\d)?$/',
-    ]);
-    if ($validasiHasil->fails()) {
-        return back()->withErrors($validasiHasil)->withInput();
-    }
+            if ($gardu) {
+                $fmtDecimal = function ($val, $decimals = 1) {
+                    if (is_null($val) || $val === '') return null;
+                    if (is_numeric($val)) {
+                        return number_format(round((float)$val, $decimals), $decimals, '.', '');
+                    }
+                    return trim((string)$val);
+                };
 
-    // Update hasil hitung ke data_gardu (ikut transaksi, akan di-rollback jika tidak ada perubahan)
-    DataGardu::where('kd_gardu', $request->kd_gardu)->update([
-        'beban_kva_trafo'  => $bebanKvaTrafo,
-        'persentase_beban' => $persentaseBeban,
-    ]);
+                $newBebanStr = $fmtDecimal($bebanKvaTrafo, 1);
+                $newPersStr  = $fmtDecimal($persentaseBeban, 1);
+                $oldBebanStr = $fmtDecimal($gardu->beban_kva_trafo ?? null, 1);
+                $oldPersStr  = $fmtDecimal($gardu->persentase_beban ?? null, 1);
 
-    // Ambil data lama utk pembanding
-    $dataLama = $pengukuran->only(array_keys($dataBaru));
+                if ($oldBebanStr !== $newBebanStr || $oldPersStr !== $newPersStr) {
+                    $adaPerubahanGardu = true;
 
-    // Bandingkan tanpa 'diubah_oleh'
-    $keysCompare = array_diff(array_keys($dataBaru), ['diubah_oleh']);
-    $filterByKeys = function(array $arr, array $keys) {
-        return array_intersect_key($arr, array_flip($keys));
-    };
-    $perubahanUpdate = array_diff_assoc(
-        $filterByKeys($dataBaru, $keysCompare),
-        $filterByKeys($dataLama, $keysCompare)
-    );
+                    $dataLamaFull = $gardu->toArray();
 
-    if (empty($perubahanUpdate)) {
-        DB::rollBack();
-        return back()->with('info', 'Tidak ada perubahan data, update dibatalkan.');
-    }
+                    $gardu->update([
+                        'beban_kva_trafo'  => $newBebanStr,
+                        'persentase_beban' => $newPersStr,
+                    ]);
 
-    // Lanjut update ke omt_pengukuran
-    $pengukuran->update($dataBaru);
+                    $dataBaruFull = $gardu->fresh()->toArray();
 
-    // Simpan history
-    HistoryDataOmtPengukuran::create([
-        'id_omt_pengukuran' => $pengukuran->id,
-        'data_lama'         => json_encode($dataLama, JSON_UNESCAPED_UNICODE),
-        'data_baru'         => json_encode($pengukuran->only(array_keys($dataBaru)), JSON_UNESCAPED_UNICODE),
-        'aksi'              => 'update',
-        'diubah_oleh'       => $dataBaru['diubah_oleh'],
-        'keterangan'        => $request->input('keterangan_history'),
-    ]);
+                    $fieldsUntukBanding = ['beban_kva_trafo', 'persentase_beban'];
+                    foreach ($fieldsUntukBanding as $f) {
+                        $dataLamaFull[$f] = $fmtDecimal($dataLamaFull[$f] ?? null, 1);
+                        $dataBaruFull[$f] = $fmtDecimal($dataBaruFull[$f] ?? null, 1);
+                    }
 
-    DB::commit();
+                    $dataLamaBanding = array_intersect_key($dataLamaFull, array_flip($fieldsUntukBanding));
+                    $dataBaruBanding = array_intersect_key($dataBaruFull, array_flip($fieldsUntukBanding));
 
-    return redirect()
-        ->route('omt-pengukuran.create', ['kd_gardu' => $pengukuran->kd_gardu])
-        ->with('success', 'OMT pengukuran berhasil diperbarui.');
-} catch (\Throwable $e) {
-    \Log::error('OMT Update Error', ['msg' => $e->getMessage()]);
-    DB::rollBack();
-    return back()->with('error', 'Terjadi kesalahan saat memperbarui data.');
-}
+                    if ($dataLamaBanding !== $dataBaruBanding) {
+                        HistoryDataGardu::create([
+                            'id_data_gardu' => $gardu->id,
+                            'data_lama'     => json_encode($dataLamaFull, JSON_UNESCAPED_UNICODE),
+                            'data_baru'     => json_encode($dataBaruFull, JSON_UNESCAPED_UNICODE),
+                            'aksi'          => 'update',
+                            'diubah_oleh'   => Auth::user()->name ?? 'Sistem (otomatis)',
+                            'keterangan'    => 'Pembaruan beban dari hasil pengukuran',
+                        ]);
+                    }
+                }
+            }
+
+            if ($adaPerubahanOmt) {
+                $dataBaru['diubah_oleh'] = auth()->user()->name ?? 'Sistem';
+
+                $pengukuran->update($dataBaru);
+                $pengukuran->refresh();
+
+                $extra = [
+                    'beban_kva_trafo'  => $gardu->beban_kva_trafo ?? null,
+                    'persentase_beban' => $gardu->persentase_beban ?? null,
+                ];
+
+                HistoryDataOmtPengukuran::create([
+                    'id_omt_pengukuran' => $pengukuran->id,
+                    'data_lama'         => json_encode(array_merge($dataLamaOmt, $extra), JSON_UNESCAPED_UNICODE),
+                    'data_baru'         => json_encode(array_merge($pengukuran->only(array_keys($dataBaru)), $extra), JSON_UNESCAPED_UNICODE),
+                    'aksi'              => 'update',
+                    'diubah_oleh'       => auth()->user()->name,
+                    'keterangan'        => $request->keterangan_history,
+                ]);
+            }
+
+            DB::commit();
+
+            // Berikan response berdasarkan perubahan yang terjadi
+            if (!$adaPerubahanOmt && !$adaPerubahanGardu) {
+                return back()->with('info', 'Tidak ada perubahan data.');
+            } elseif ($adaPerubahanOmt && $adaPerubahanGardu) {
+                return redirect()
+                    ->route('omt-pengukuran.create', ['kd_gardu' => $pengukuran->kd_gardu])
+                    ->with('success', 'OMT pengukuran dan data gardu berhasil diperbarui.');
+            } elseif ($adaPerubahanOmt) {
+                return redirect()
+                    ->route('omt-pengukuran.create', ['kd_gardu' => $pengukuran->kd_gardu])
+                    ->with('success', 'OMT pengukuran berhasil diperbarui.');
+            } else {
+                return back()->with('info', 'Data gardu berhasil diperbarui, tidak ada perubahan pada OMT.');
+            }
+        } catch (ValidationException $e) {
+            DB::rollBack();
+            return back()->withErrors($e->errors())->withInput();
+        } catch (\Throwable $e) {
+            \Log::error('OMT Update Error', [
+                'msg'  => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+            ]);
+            DB::rollBack();
+            return back()->with('error', 'Terjadi kesalahan saat memperbarui data.');
+        }
     }
 
     public function show($id)
@@ -570,58 +626,58 @@ try {
         }
     }
     public function historyIndex(Request $request)
-{
-    $perPage = max(5, min((int)$request->get('per_page', 20), 100));
-    $q = trim((string)$request->get('q', ''));
+    {
+        $perPage = max(5, min((int)$request->get('per_page', 20), 100));
+        $q = trim((string)$request->get('q', ''));
 
-    // pakai nama tabel dari model (anti-typo)
-    $histTable = (new HistoryDataOmtPengukuran())->getTable(); // biasanya: history_omt_pengukuran
-    $omtTable  = (new OmtPengukuran())->getTable();            // biasanya: omt_pengukuran
-    $dgTable   = (new DataGardu())->getTable();                 // biasanya: data_gardu
+        // pakai nama tabel dari model (anti-typo)
+        $histTable = (new HistoryDataOmtPengukuran())->getTable(); // biasanya: history_omt_pengukuran
+        $omtTable  = (new OmtPengukuran())->getTable();            // biasanya: omt_pengukuran
+        $dgTable   = (new DataGardu())->getTable();                 // biasanya: data_gardu
 
-    // subquery rekap (1 baris per id_omt_pengukuran)
-    $recapSub = HistoryDataOmtPengukuran::select([
+        // subquery rekap (1 baris per id_omt_pengukuran)
+        $recapSub = HistoryDataOmtPengukuran::select([
             'id_omt_pengukuran',
             DB::raw('MAX(id) as last_id'),
             DB::raw('MAX(created_at) as last_at'),
             DB::raw('COUNT(*) as total_logs'),
         ])
-        ->groupBy('id_omt_pengukuran');
+            ->groupBy('id_omt_pengukuran');
 
-    // FROM (subquery) + JOIN ke tabel yang sama untuk ambil baris terakhir (hlast)
-    $query = DB::query()
-        ->fromSub($recapSub, 'recaps')
-        ->join("$histTable as hlast", 'hlast.id', '=', 'recaps.last_id')
-        ->leftJoin("$omtTable as omt", 'omt.id', '=', 'recaps.id_omt_pengukuran')
-        ->leftJoin("$dgTable as dg", 'dg.kd_gardu', '=', 'omt.kd_gardu')
-        ->select([
-            'recaps.id_omt_pengukuran',
-            'recaps.total_logs',
-            'recaps.last_at',
-            'hlast.aksi as last_aksi',
-            'hlast.diubah_oleh as last_by',
-            'hlast.keterangan as last_notes',
-            'hlast.data_lama as last_snapshot',
-            'omt.kd_gardu as kd_gardu_now',
-            'omt.waktu_pengukuran as waktu_pengukuran_now',
-            'dg.kd_pylg as kd_pylg_now',
-            'dg.alamat as alamat_now',
-            'dg.gardu_induk as gi_now',
-        ])
-        ->orderByDesc('recaps.last_at');
+        // FROM (subquery) + JOIN ke tabel yang sama untuk ambil baris terakhir (hlast)
+        $query = DB::query()
+            ->fromSub($recapSub, 'recaps')
+            ->join("$histTable as hlast", 'hlast.id', '=', 'recaps.last_id')
+            ->leftJoin("$omtTable as omt", 'omt.id', '=', 'recaps.id_omt_pengukuran')
+            ->leftJoin("$dgTable as dg", 'dg.kd_gardu', '=', 'omt.kd_gardu')
+            ->select([
+                'recaps.id_omt_pengukuran',
+                'recaps.total_logs',
+                'recaps.last_at',
+                'hlast.aksi as last_aksi',
+                'hlast.diubah_oleh as last_by',
+                'hlast.keterangan as last_notes',
+                'hlast.data_lama as last_snapshot',
+                'omt.kd_gardu as kd_gardu_now',
+                'omt.waktu_pengukuran as waktu_pengukuran_now',
+                'dg.kd_pylg as kd_pylg_now',
+                'dg.alamat as alamat_now',
+                'dg.gardu_induk as gi_now',
+            ])
+            ->orderByDesc('recaps.last_at');
 
-    if ($q !== '') {
-        $query->where(function ($qq) use ($q, $histTable, $omtTable) {
-            $qq->where("omt.kd_gardu", 'like', "%{$q}%")
-               ->orWhere("hlast.data_lama", 'like', '%"kd_gardu":"'.$q.'"%')
-               ->orWhere("hlast.data_lama", 'like', '%"kd_gardu":'.$q.'%');
-        });
+        if ($q !== '') {
+            $query->where(function ($qq) use ($q, $histTable, $omtTable) {
+                $qq->where("omt.kd_gardu", 'like', "%{$q}%")
+                    ->orWhere("hlast.data_lama", 'like', '%"kd_gardu":"' . $q . '"%')
+                    ->orWhere("hlast.data_lama", 'like', '%"kd_gardu":' . $q . '%');
+            });
+        }
+
+        $recaps = $query->paginate($perPage)->withQueryString();
+
+        return view('manajemen-data.historis.history_omt_pengkuruan.recap_index', compact('recaps'));
     }
-
-    $recaps = $query->paginate($perPage)->withQueryString();
-
-    return view('manajemen-data.historis.history_omt_pengkuruan.recap_index', compact('recaps'));
-}
 
     public function historyShow(Request $request, $idOmt)
     {

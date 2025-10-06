@@ -16,7 +16,6 @@ class OmtPengukuran extends Model
     protected $fillable = [
         'kd_gardu',
         'waktu_pengukuran',
-        'diubah_oleh',
         'ian',
         'iar',
         'ias',
@@ -53,5 +52,15 @@ class OmtPengukuran extends Model
     public function history()
     {
         return $this->hasMany(HistoryDataOmtPengukuran::class, 'id_omt_pengukuran');
+    }
+
+    public function getBebanKvaTrafoAttribute()
+    {
+        return $this->gardu->beban_kva_trafo ?? null;
+    }
+
+    public function getPersentaseBebanAttribute()
+    {
+        return $this->gardu->persentase_beban ?? null;
     }
 }
