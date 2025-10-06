@@ -67,9 +67,7 @@
                 'idn' => 'IDN', 'idr' => 'IDR', 'ids' => 'IDS', 'idt' => 'IDT',
                 'vrn' => 'VRN', 'vrs' => 'VRS', 'vsn' => 'VSN',
                 'vst' => 'VST', 'vtn' => 'VTN', 'vtr' => 'VTR',
-                'iun' => 'IUN', 'iur' => 'IUR', 'ius' => 'IUS', 'iut' => 'IUT',
-                'beban_kva_trafo' => 'Beban KVA Trafo',
-                'persentase_beban' => 'Persentase Beban',
+                'iun' => 'IUN', 'iur' => 'IUR', 'ius' => 'IUS', 'iut' => 'IUT',                
               ];
             @endphp
 

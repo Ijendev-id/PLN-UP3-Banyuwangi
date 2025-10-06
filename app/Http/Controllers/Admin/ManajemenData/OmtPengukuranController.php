@@ -492,15 +492,15 @@ class OmtPengukuranController extends Controller
                 $pengukuran->update($dataBaru);
                 $pengukuran->refresh();
 
-                $extra = [
-                    'beban_kva_trafo'  => $gardu->beban_kva_trafo ?? null,
-                    'persentase_beban' => $gardu->persentase_beban ?? null,
-                ];
+                // $extra = [
+                //     'beban_kva_trafo'  => $gardu->beban_kva_trafo ?? null,
+                //     'persentase_beban' => $gardu->persentase_beban ?? null,
+                // ];
 
                 HistoryDataOmtPengukuran::create([
                     'id_omt_pengukuran' => $pengukuran->id,
-                    'data_lama'         => json_encode(array_merge($dataLamaOmt, $extra), JSON_UNESCAPED_UNICODE),
-                    'data_baru'         => json_encode(array_merge($pengukuran->only(array_keys($dataBaru)), $extra), JSON_UNESCAPED_UNICODE),
+                    'data_lama'         => json_encode(array_merge($dataLamaOmt), JSON_UNESCAPED_UNICODE),
+                    'data_baru'         => json_encode(array_merge($pengukuran->only(array_keys($dataBaru))), JSON_UNESCAPED_UNICODE),
                     'aksi'              => 'update',
                     'diubah_oleh'       => auth()->user()->name,
                     'keterangan'        => $request->keterangan_history,
