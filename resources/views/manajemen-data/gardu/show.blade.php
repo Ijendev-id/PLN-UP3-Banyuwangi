@@ -53,7 +53,7 @@
                     </div>
 
                     <div class="col-md-3 mb-3">
-                      <div class="summary-label">Daya Trafo (VA)</div>
+                      <div class="summary-label">Daya Trafo (kVA)</div>
                       <div class="summary-value">{{ $gardu->daya_trafo }}</div>
                     </div>
                     <div class="col-md-3 mb-3">
@@ -199,14 +199,14 @@
               <div class="row">
                 <div class="col-md-4">
                   <div class="form-group mb-2">
-                    <label class="mb-1">Nilai SDK Utama</label>
+                    <label class="mb-1">Arus Skunder</label>
                     <input type="text" class="form-control" value="{{ $gardu->nilai_sdk_utama }}" readonly>
                   </div>
                 </div>
 
                 <div class="col-md-4">
                   <div class="form-group mb-2">
-                    <label class="mb-1">Nilai Primer</label>
+                    <label class="mb-1">Arus Primer</label>
                     <input type="text" class="form-control" value="{{ $gardu->nilai_primer }}" readonly>
                   </div>
                 </div>

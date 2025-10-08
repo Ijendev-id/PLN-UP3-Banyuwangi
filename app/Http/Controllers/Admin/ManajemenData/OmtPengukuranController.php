@@ -32,22 +32,22 @@ class OmtPengukuranController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'kd_gardu' => 'required|string|max:10|exists:data_gardu,kd_gardu|unique:omt_pengukuran,kd_gardu',
-            'ian' => 'required|integer|max:32767',
-            'iar' => 'required|integer|max:32767',
-            'ias' => 'required|integer|max:32767',
-            'iat' => 'required|integer|max:32767',
-            'ibn' => 'required|integer|max:32767',
-            'ibr' => 'required|integer|max:32767',
-            'ibs' => 'required|integer|max:32767',
-            'ibt' => 'required|integer|max:32767',
-            'icn' => 'required|integer|max:32767',
-            'icr' => 'required|integer|max:32767',
-            'ics' => 'required|integer|max:32767',
-            'ict' => 'required|integer|max:32767',
-            'idn' => 'required|integer|max:32767',
-            'idr' => 'required|integer|max:32767',
-            'ids' => 'required|integer|max:32767',
-            'idt' => 'required|integer|max:32767',
+            'ian' => 'nullable|integer|max:32767',
+            'iar' => 'nullable|integer|max:32767',
+            'ias' => 'nullable|integer|max:32767',
+            'iat' => 'nullable|integer|max:32767',
+            'ibn' => 'nullable|integer|max:32767',
+            'ibr' => 'nullable|integer|max:32767',
+            'ibs' => 'nullable|integer|max:32767',
+            'ibt' => 'nullable|integer|max:32767',
+            'icn' => 'nullable|integer|max:32767',
+            'icr' => 'nullable|integer|max:32767',
+            'ics' => 'nullable|integer|max:32767',
+            'ict' => 'nullable|integer|max:32767',
+            'idn' => 'nullable|integer|max:32767',
+            'idr' => 'nullable|integer|max:32767',
+            'ids' => 'nullable|integer|max:32767',
+            'idt' => 'nullable|integer|max:32767',
             'vrn' => 'required|integer|max:32767',
             'vrs' => 'required|integer|max:32767',
             'vsn' => 'required|integer|max:32767',
@@ -68,52 +68,36 @@ class OmtPengukuranController extends Controller
             'kd_gardu.unique' => 'Kode gardu sudah terdaftar pada sistem',
             'kd_gardu.max' => 'Panjang Kode gardu maksimal 10 karakter',
             'kd_gardu.exists'   => 'Kode gardu tidak ditemukan pada data master',
-            'ian.required' => 'IAN wajib diisi',
             'ian.integer' => 'IAN harus berupa angka',
             'ian.max' => 'IAN maksimal 32.767',
-            'iar.required' => 'IAR wajib diisi',
             'iar.integer' => 'IAR harus berupa angka',
             'iar.max' => 'IAR maksimal 32.767',
-            'ias.required' => 'IAS wajib diisi',
             'ias.integer' => 'IAS harus berupa angka',
             'ias.max' => 'IAS maksimal 32.767',
-            'iat.required' => 'IAT wajib diisi',
             'iat.integer' => 'IAT harus berupa angka',
             'iat.max' => 'IAT maksimal 32.767',
-            'ibn.required' => 'IBN wajib diisi',
             'ibn.integer' => 'IBN harus berupa angka',
             'ibn.max' => 'IBN maksimal 32.767',
-            'ibr.required' => 'IBR wajib diisi',
             'ibr.integer' => 'IBR harus berupa angka',
             'ibr.max' => 'IBR maksimal 32.767',
-            'ibs.required' => 'IBS wajib diisi',
             'ibs.integer' => 'IBS harus berupa angka',
             'ibs.max' => 'IBS maksimal 32.767',
-            'ibt.required' => 'IBT wajib diisi',
             'ibt.integer' => 'IBT harus berupa angka',
             'ibt.max' => 'IBT maksimal 32.767',
-            'icn.required' => 'ICN wajib diisi',
             'icn.integer' => 'ICN harus berupa angka',
             'icn.max' => 'ICN maksimal 32.767',
-            'icr.required' => 'ICR wajib diisi',
             'icr.integer' => 'ICR harus berupa angka',
             'icr.max' => 'ICR maksimal 32.767',
-            'ics.required' => 'ICS wajib diisi',
             'ics.integer' => 'ICS harus berupa angka',
             'ics.max' => 'ICS maksimal 32.767',
-            'ict.required' => 'ICT wajib diisi',
             'ict.integer' => 'ICT harus berupa angka',
             'ict.max' => 'ICT maksimal 32.767',
-            'idn.required' => 'IDN wajib diisi',
             'idn.integer' => 'IDN harus berupa angka',
             'idn.max' => 'IDN maksimal 32.767',
-            'idr.required' => 'IDR wajib diisi',
             'idr.integer' => 'IDR harus berupa angka',
             'idr.max' => 'IDR maksimal 32.767',
-            'ids.required' => 'IDS wajib diisi',
             'ids.integer' => 'IDS harus berupa angka',
             'ids.max' => 'IDS maksimal 32.767',
-            'idt.required' => 'IDT wajib diisi',
             'idt.integer' => 'IDT harus berupa angka',
             'idt.max' => 'IDT maksimal 32.767',
             'vrn.required' => 'VRN wajib diisi',
@@ -169,12 +153,34 @@ class OmtPengukuranController extends Controller
             $dataBaru['waktu_pengukuran'] = Carbon::createFromFormat('Y-m-d\TH:i', $request->waktu_pengukuran)
                 ->format('Y-m-d H:i:s');
 
+            //apabila field ini dikosongi maka sistem otomatis mengisi menjadi 0
+            $kolomAngka = [
+                'ian',
+                'iar',
+                'ias',
+                'iat',
+                'ibn',
+                'ibr',
+                'ibs',
+                'ibt',
+                'icn',
+                'icr',
+                'ics',
+                'ict',
+                'idn',
+                'idr',
+                'ids',
+                'idt'
+            ];
+
+            foreach ($kolomAngka as $kolom) {
+                $dataBaru[$kolom] = $request->input($kolom, 0) ?? 0;
+            }
+
             $pengukuran = OmtPengukuran::create($dataBaru);
 
             // === Hitung beban dan persentase
-            $bebanKvaTrafo = ($request->iur * $request->vrn)
-                + ($request->ius * $request->vsn)
-                + ($request->iut * $request->vtn);
+            $bebanKvaTrafo = round((($request->iur * $request->vrn) + ($request->ius * $request->vsn) + ($request->iut * $request->vtn)) / 1000, 1);
 
             $gardu = DataGardu::where('kd_gardu', $dataBaru['kd_gardu'])->first();
             $persentaseBeban = 0;
@@ -263,22 +269,22 @@ class OmtPengukuranController extends Controller
 
         $validator = Validator::make($request->all(), [
             'kd_gardu' => "required|string|max:10|exists:data_gardu,kd_gardu|unique:omt_pengukuran,kd_gardu,{$id},id",
-            'ian' => 'required|integer|max:32767',
-            'iar' => 'required|integer|max:32767',
-            'ias' => 'required|integer|max:32767',
-            'iat' => 'required|integer|max:32767',
-            'ibn' => 'required|integer|max:32767',
-            'ibr' => 'required|integer|max:32767',
-            'ibs' => 'required|integer|max:32767',
-            'ibt' => 'required|integer|max:32767',
-            'icn' => 'required|integer|max:32767',
-            'icr' => 'required|integer|max:32767',
-            'ics' => 'required|integer|max:32767',
-            'ict' => 'required|integer|max:32767',
-            'idn' => 'required|integer|max:32767',
-            'idr' => 'required|integer|max:32767',
-            'ids' => 'required|integer|max:32767',
-            'idt' => 'required|integer|max:32767',
+            'ian' => 'nullable|integer|max:32767',
+            'iar' => 'nullable|integer|max:32767',
+            'ias' => 'nullable|integer|max:32767',
+            'iat' => 'nullable|integer|max:32767',
+            'ibn' => 'nullable|integer|max:32767',
+            'ibr' => 'nullable|integer|max:32767',
+            'ibs' => 'nullable|integer|max:32767',
+            'ibt' => 'nullable|integer|max:32767',
+            'icn' => 'nullable|integer|max:32767',
+            'icr' => 'nullable|integer|max:32767',
+            'ics' => 'nullable|integer|max:32767',
+            'ict' => 'nullable|integer|max:32767',
+            'idn' => 'nullable|integer|max:32767',
+            'idr' => 'nullable|integer|max:32767',
+            'ids' => 'nullable|integer|max:32767',
+            'idt' => 'nullable|integer|max:32767',
             'vrn' => 'required|integer|max:32767',
             'vrs' => 'required|integer|max:32767',
             'vsn' => 'required|integer|max:32767',
@@ -298,52 +304,36 @@ class OmtPengukuranController extends Controller
             'kd_gardu.unique' => 'Kode gardu sudah terdaftar pada sistem',
             'kd_gardu.max' => 'Panjang Kode gardu maksimal 10 karakter',
             'kd_gardu.exists'   => 'Kode gardu tidak ditemukan pada data master',
-            'ian.required' => 'IAN wajib diisi',
             'ian.integer' => 'IAN harus berupa angka',
             'ian.max' => 'IAN maksimal 32.767',
-            'iar.required' => 'IAR wajib diisi',
             'iar.integer' => 'IAR harus berupa angka',
             'iar.max' => 'IAR maksimal 32.767',
-            'ias.required' => 'IAS wajib diisi',
             'ias.integer' => 'IAS harus berupa angka',
             'ias.max' => 'IAS maksimal 32.767',
-            'iat.required' => 'IAT wajib diisi',
             'iat.integer' => 'IAT harus berupa angka',
             'iat.max' => 'IAT maksimal 32.767',
-            'ibn.required' => 'IBN wajib diisi',
             'ibn.integer' => 'IBN harus berupa angka',
             'ibn.max' => 'IBN maksimal 32.767',
-            'ibr.required' => 'IBR wajib diisi',
             'ibr.integer' => 'IBR harus berupa angka',
             'ibr.max' => 'IBR maksimal 32.767',
-            'ibs.required' => 'IBS wajib diisi',
             'ibs.integer' => 'IBS harus berupa angka',
             'ibs.max' => 'IBS maksimal 32.767',
-            'ibt.required' => 'IBT wajib diisi',
             'ibt.integer' => 'IBT harus berupa angka',
             'ibt.max' => 'IBT maksimal 32.767',
-            'icn.required' => 'ICN wajib diisi',
             'icn.integer' => 'ICN harus berupa angka',
             'icn.max' => 'ICN maksimal 32.767',
-            'icr.required' => 'ICR wajib diisi',
             'icr.integer' => 'ICR harus berupa angka',
             'icr.max' => 'ICR maksimal 32.767',
-            'ics.required' => 'ICS wajib diisi',
             'ics.integer' => 'ICS harus berupa angka',
             'ics.max' => 'ICS maksimal 32.767',
-            'ict.required' => 'ICT wajib diisi',
             'ict.integer' => 'ICT harus berupa angka',
             'ict.max' => 'ICT maksimal 32.767',
-            'idn.required' => 'IDN wajib diisi',
             'idn.integer' => 'IDN harus berupa angka',
             'idn.max' => 'IDN maksimal 32.767',
-            'idr.required' => 'IDR wajib diisi',
             'idr.integer' => 'IDR harus berupa angka',
             'idr.max' => 'IDR maksimal 32.767',
-            'ids.required' => 'IDS wajib diisi',
             'ids.integer' => 'IDS harus berupa angka',
             'ids.max' => 'IDS maksimal 32.767',
-            'idt.required' => 'IDT wajib diisi',
             'idt.integer' => 'IDT harus berupa angka',
             'idt.max' => 'IDT maksimal 32.767',
             'vrn.required' => 'VRN wajib diisi',
@@ -400,14 +390,37 @@ class OmtPengukuranController extends Controller
 
             $dataBaru = $request->only((new OmtPengukuran())->getFillable());
             $dataBaru['waktu_pengukuran'] = $waktuPengukuranFormatted;
+
+            //apabila field ini dikosongi maka sistem otomatis mengisi menjadi 0
+            $kolomAngka = [
+                'ian',
+                'iar',
+                'ias',
+                'iat',
+                'ibn',
+                'ibr',
+                'ibs',
+                'ibt',
+                'icn',
+                'icr',
+                'ics',
+                'ict',
+                'idn',
+                'idr',
+                'ids',
+                'idt'
+            ];
+
+            foreach ($kolomAngka as $kolom) {
+                $dataBaru[$kolom] = $request->input($kolom, 0) ?? 0;
+            }
+
             unset($dataBaru['diubah_oleh']);
             $dataLamaOmt = $pengukuran->only(array_keys($dataBaru));
             $perubahanUpdate = array_diff_assoc($dataBaru, $dataLamaOmt);
 
             // Hitung beban KVA trafo
-            $bebanKvaTrafo = ($request->iur * $request->vrn)
-                + ($request->ius * $request->vsn)
-                + ($request->iut * $request->vtn);
+            $bebanKvaTrafo = round((($request->iur * $request->vrn) + ($request->ius * $request->vsn) + ($request->iut * $request->vtn)) / 1000, 1);
 
             $gardu = DataGardu::where('kd_gardu', $request->kd_gardu)->first();
 

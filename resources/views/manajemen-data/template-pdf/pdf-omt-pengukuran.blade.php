@@ -119,14 +119,14 @@
         <tr>
             <td>Vrn</td>
             <td>: {{ $pengukuran->vrn }}</td>
-            <td>Vrs</td>
-            <td>: {{ $pengukuran->vrs }}</td>
             <td>Vsn</td>
             <td>: {{ $pengukuran->vsn }}</td>
-            <td>Vst</td>
-            <td>: {{ $pengukuran->vst }}</td>
             <td>Vtn</td>
             <td>: {{ $pengukuran->vtn }}</td>
+            <td>Vrs</td>
+            <td>: {{ $pengukuran->vrs }}</td>            
+            <td>Vst</td>
+            <td>: {{ $pengukuran->vst }}</td>            
             <td>Vtr</td>
             <td>: {{ $pengukuran->vtr }}</td>
         </tr>

@@ -132,88 +132,88 @@
                 {{-- 1) ian, iar, ias, iat --}}
                 <div class="col-md-3">
                   <label>ian</label>
-                  <input required type="number" name="ian" class="form-control" step="1" min="0" max="32767"
+                  <input type="number" name="ian" class="form-control" step="1" min="0" max="32767"
                          value="{{ old('ian', $pengukuran->ian ?? '') }}">
                 </div>
                 <div class="col-md-3">
                   <label>iar</label>
-                  <input required type="number" name="iar" class="form-control" step="1" min="0" max="32767"
+                  <input type="number" name="iar" class="form-control" step="1" min="0" max="32767"
                          value="{{ old('iar', $pengukuran->iar ?? '') }}">
                 </div>
                 <div class="col-md-3">
                   <label>ias</label>
-                  <input required type="number" name="ias" class="form-control" step="1" min="0" max="32767"
+                  <input type="number" name="ias" class="form-control" step="1" min="0" max="32767"
                          value="{{ old('ias', $pengukuran->ias ?? '') }}">
                 </div>
                 <div class="col-md-3">
                   <label>iat</label>
-                  <input required type="number" name="iat" class="form-control" step="1" min="0" max="32767"
+                  <input type="number" name="iat" class="form-control" step="1" min="0" max="32767"
                          value="{{ old('iat', $pengukuran->iat ?? '') }}">
                 </div>
 
                 {{-- 2) ibn, ibr, ibs, ibt --}}
                 <div class="col-md-3 mt-2">
                   <label>ibn</label>
-                  <input required type="number" name="ibn" class="form-control" step="1" min="0" max="32767"
+                  <input type="number" name="ibn" class="form-control" step="1" min="0" max="32767"
                          value="{{ old('ibn', $pengukuran->ibn ?? '') }}">
                 </div>
                 <div class="col-md-3 mt-2">
                   <label>ibr</label>
-                  <input required type="number" name="ibr" class="form-control" step="1" min="0" max="32767"
+                  <input type="number" name="ibr" class="form-control" step="1" min="0" max="32767"
                          value="{{ old('ibr', $pengukuran->ibr ?? '') }}">
                 </div>
                 <div class="col-md-3 mt-2">
                   <label>ibs</label>
-                  <input required type="number" name="ibs" class="form-control" step="1" min="0" max="32767"
+                  <input type="number" name="ibs" class="form-control" step="1" min="0" max="32767"
                          value="{{ old('ibs', $pengukuran->ibs ?? '') }}">
                 </div>
                 <div class="col-md-3 mt-2">
                   <label>ibt</label>
-                  <input required type="number" name="ibt" class="form-control" step="1" min="0" max="32767"
+                  <input type="number" name="ibt" class="form-control" step="1" min="0" max="32767"
                          value="{{ old('ibt', $pengukuran->ibt ?? '') }}">
                 </div>
 
                 {{-- 3) icn, icr, ics, ict --}}
                 <div class="col-md-3 mt-2">
                   <label>icn</label>
-                  <input required type="number" name="icn" class="form-control" step="1" min="0" max="32767"
+                  <input type="number" name="icn" class="form-control" step="1" min="0" max="32767"
                          value="{{ old('icn', $pengukuran->icn ?? '') }}">
                 </div>
                 <div class="col-md-3 mt-2">
                   <label>icr</label>
-                  <input required type="number" name="icr" class="form-control" step="1" min="0" max="32767"
+                  <input type="number" name="icr" class="form-control" step="1" min="0" max="32767"
                          value="{{ old('icr', $pengukuran->icr ?? '') }}">
                 </div>
                 <div class="col-md-3 mt-2">
                   <label>ics</label>
-                  <input required type="number" name="ics" class="form-control" step="1" min="0" max="32767"
+                  <input type="number" name="ics" class="form-control" step="1" min="0" max="32767"
                          value="{{ old('ics', $pengukuran->ics ?? '') }}">
                 </div>
                 <div class="col-md-3 mt-2">
                   <label>ict</label>
-                  <input required type="number" name="ict" class="form-control" step="1" min="0" max="32767"
+                  <input type="number" name="ict" class="form-control" step="1" min="0" max="32767"
                          value="{{ old('ict', $pengukuran->ict ?? '') }}">
                 </div>
 
                 {{-- 4) idn, idr, ids, idt --}}
                 <div class="col-md-3 mt-2">
                   <label>idn</label>
-                  <input required type="number" name="idn" class="form-control" step="1" min="0" max="32767"
+                  <input type="number" name="idn" class="form-control" step="1" min="0" max="32767"
                          value="{{ old('idn', $pengukuran->idn ?? '') }}">
                 </div>
                 <div class="col-md-3 mt-2">
                   <label>idr</label>
-                  <input required type="number" name="idr" class="form-control" step="1" min="0" max="32767"
+                  <input type="number" name="idr" class="form-control" step="1" min="0" max="32767"
                          value="{{ old('idr', $pengukuran->idr ?? '') }}">
                 </div>
                 <div class="col-md-3 mt-2">
                   <label>ids</label>
-                  <input required type="number" name="ids" class="form-control" step="1" min="0" max="32767"
+                  <input type="number" name="ids" class="form-control" step="1" min="0" max="32767"
                          value="{{ old('ids', $pengukuran->ids ?? '') }}">
                 </div>
                 <div class="col-md-3 mt-2">
                   <label>idt</label>
-                  <input required type="number" name="idt" class="form-control" step="1" min="0" max="32767"
+                  <input type="number" name="idt" class="form-control" step="1" min="0" max="32767"
                          value="{{ old('idt', $pengukuran->idt ?? '') }}">
                 </div>
 
@@ -246,25 +246,25 @@
                          value="{{ old('vrn', $pengukuran->vrn ?? '') }}">
                 </div>
                 <div class="col-md-2 mt-2">
-                  <label>vrs</label>
-                  <input required type="number" name="vrs" class="form-control" step="1" min="0" max="32767"
-                         value="{{ old('vrs', $pengukuran->vrs ?? '') }}">
-                </div>
-                <div class="col-md-2 mt-2">
                   <label>vsn</label>
                   <input required type="number" name="vsn" class="form-control" step="1" min="0" max="32767"
                          value="{{ old('vsn', $pengukuran->vsn ?? '') }}">
-                </div>
-                <div class="col-md-2 mt-2">
-                  <label>vst</label>
-                  <input required type="number" name="vst" class="form-control" step="1" min="0" max="32767"
-                         value="{{ old('vst', $pengukuran->vst ?? '') }}">
                 </div>
                 <div class="col-md-2 mt-2">
                   <label>vtn</label>
                   <input required type="number" name="vtn" class="form-control" step="1" min="0" max="32767"
                          value="{{ old('vtn', $pengukuran->vtn ?? '') }}">
                 </div>
+                <div class="col-md-2 mt-2">
+                  <label>vrs</label>
+                  <input required type="number" name="vrs" class="form-control" step="1" min="0" max="32767"
+                         value="{{ old('vrs', $pengukuran->vrs ?? '') }}">
+                </div>                
+                <div class="col-md-2 mt-2">
+                  <label>vst</label>
+                  <input required type="number" name="vst" class="form-control" step="1" min="0" max="32767"
+                         value="{{ old('vst', $pengukuran->vst ?? '') }}">
+                </div>                
                 <div class="col-md-2 mt-2">
                   <label>vtr</label>
                   <input required type="number" name="vtr" class="form-control" step="1" min="0" max="32767"

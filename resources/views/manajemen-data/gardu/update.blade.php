@@ -103,7 +103,7 @@
                 {{-- daya_trafo --}}
                 <div class="col-md-4">
                   <div class="form-group">
-                    <label>Daya Trafo (VA) <span class="text-danger">*</span></label>
+                    <label>Daya Trafo (kVA) <span class="text-danger">*</span></label>
                     <input type="number" name="daya_trafo" max="32767"
                            class="form-control @error('daya_trafo') is-invalid @enderror"
                            value="{{ old('daya_trafo', $gardu->daya_trafo) }}" required>
@@ -285,7 +285,7 @@
                   {{-- nilai_sdk_utama --}}
                   <div class="col-md-4">
                     <div class="form-group">
-                      <label>Nilai SDK Utama <span class="text-danger">*</span></label>
+                      <label>Arus Skunder <span class="text-danger">*</span></label>
                       <input type="number" name="nilai_sdk_utama" max="32767"
                              class="form-control @error('nilai_sdk_utama') is-invalid @enderror"
                              value="{{ old('nilai_sdk_utama', $gardu->nilai_sdk_utama) }}" required>
@@ -296,7 +296,7 @@
                   {{-- nilai_primer --}}
                   <div class="col-md-4">
                     <div class="form-group">
-                      <label>Nilai Primer <span class="text-danger">*</span></label>
+                      <label>Arus Primer <span class="text-danger">*</span></label>
                       <input type="number" name="nilai_primer" step="0.1" min="0" max="99.9"
                              class="form-control @error('nilai_primer') is-invalid @enderror"
                              value="{{ old('nilai_primer', $gardu->nilai_primer) }}" required>

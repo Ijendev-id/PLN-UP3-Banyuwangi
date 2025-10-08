@@ -18,22 +18,22 @@ return new class extends Migration
                 ->references('kd_gardu')
                 ->on('data_gardu')
                 ->nullOnDelete(); // field menjadi null saat data master terhapus            
-            $table->smallInteger('ian');
-            $table->smallInteger('iar');
-            $table->smallInteger('ias');
-            $table->smallInteger('iat');
-            $table->smallInteger('ibn');
-            $table->smallInteger('ibr');
-            $table->smallInteger('ibs');
-            $table->smallInteger('ibt');
-            $table->smallInteger('icn');
-            $table->smallInteger('icr');
-            $table->smallInteger('ics');
-            $table->smallInteger('ict');
-            $table->smallInteger('idn');
-            $table->smallInteger('idr');
-            $table->smallInteger('ids');
-            $table->smallInteger('idt');
+            $table->smallInteger('ian')->default(0);
+            $table->smallInteger('iar')->default(0);
+            $table->smallInteger('ias')->default(0);
+            $table->smallInteger('iat')->default(0);
+            $table->smallInteger('ibn')->default(0);
+            $table->smallInteger('ibr')->default(0);
+            $table->smallInteger('ibs')->default(0);
+            $table->smallInteger('ibt')->default(0);
+            $table->smallInteger('icn')->default(0);
+            $table->smallInteger('icr')->default(0);
+            $table->smallInteger('ics')->default(0);
+            $table->smallInteger('ict')->default(0);
+            $table->smallInteger('idn')->default(0);
+            $table->smallInteger('idr')->default(0);
+            $table->smallInteger('ids')->default(0);
+            $table->smallInteger('idt')->default(0);
             $table->smallInteger('vrn');
             $table->smallInteger('vrs');
             $table->smallInteger('vsn');
